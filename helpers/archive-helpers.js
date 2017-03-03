@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var request = require('request');
 var _ = require('underscore');
-
+var Promise = require('bluebird');
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
  * Consider using the `paths` object below to store frequently used file paths. This way,
@@ -23,8 +23,103 @@ exports.initialize = function(pathsObj) {
   });
 };
 
-// The following function names are provided to you to suggest how you might
-// modularize your code. Keep it clean!
+
+
+
+
+/////////////////////////////////
+///     PROMISES APPROACH     ///
+/////////////////////////////////
+
+
+
+
+
+exports.readListOfUrlsAsync = function() {
+  return new Promise(function(resolve, reject) {
+    fs.readFile(exports.paths.list, 'utf8', function(error, data) {
+      if (error) {
+        reject(error);
+      } else {
+        var urlArray = data.split('\n');
+        resolve(urlArray);
+      }
+    });
+  });
+};
+
+
+exports.isUrlInListAsync = function (url) {
+  return exports.readListOfUrlsAsync()
+  .then(function(sites) {
+    return new Promise(function(resolve, reject) {
+      var found = _.any(sites, function(site, i) {
+        return site.match(url);
+      });
+      resolve(found);
+    });
+  });
+};
+
+exports.addUrlToListAsync = function(url) {
+  return new Promise(function(resolve, reject) {
+    fs.appendFile(exports.paths.list, url + '\n', function(error, data) {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
+
+exports.isUrlArchivedAsync = function(url) {
+  return new Promise(function(resolve, reject) {
+    fs.access(exports.paths.archivedSites + '/' + url, function(error) {
+      if (error) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
+exports.downloadUrls = function(urls) {
+  _.each(urls, function(url) {
+    if (!url) {
+      return;
+    }
+    exports.isUrlArchivedAsync(url)
+      .then(function(found) {
+        if (found) {
+          console.log('Site already archived');
+        } else {
+          request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
+        }
+      });
+  });
+};
+
+
+
+
+
+
+
+
+
+/////////////////////////////////
+///     CALLBACK APPROACH     ///
+/////////////////////////////////
+
+
+
+
+
+
+
 
 exports.readListOfUrls = function(callback) {
   fs.readFile(exports.paths.list, 'utf8', function(error, data) {
@@ -39,17 +134,17 @@ exports.readListOfUrls = function(callback) {
 
 
 
-// exports.readListOfUrls = function(callback) {
-//   fs.readFile(exports.paths.list, 'utf8', function(error, sites) {
-//     sites = sites.toString().split('\n');
-//     if (callback) {
-//       callback(sites);
-//     }
-//   });
-// };
+exports.readListOfUrls = function(callback) {
+  fs.readFile(exports.paths.list, 'utf8', function(error, sites) {
+    sites = sites.toString().split('\n');
+    if (callback) {
+      callback(sites);
+    }
+  });
+};
+
 
 exports.isUrlInList = function(url, callback) {
-  // regexp will probs solve this easy
   exports.readListOfUrls(function(data, error) {
     if (error) {
       callback(error, null);
@@ -79,44 +174,18 @@ exports.addUrlToList = function(url, callback) {
     if (error) {
       callback(error);
     } else {
-      callback(null);
+      callback(null, 'successful post');
     }
   });
 };
 
+
 exports.isUrlArchived = function(url, callback) {
-  // probs regexp here too
   fs.access(exports.paths.archivedSites + '/' + url, function(error) {
     if (error) {
       callback(false);
     } else {
       callback(true);
     }
-  });
-};
-
-exports.isUrlArchived = function(url, callback) {
-  // probs regexp here too
-  fs.access(exports.paths.archivedSites + '/' + url, function(error) {
-    if (error) {
-      callback(false);
-    } else {
-      callback(true);
-    }
-  });
-};
-
-exports.downloadUrls = function(urls) {
-  _.each(urls, function(url) {
-    if (!url) {
-      return;
-    }
-    exports.isUrlArchived(url, function(exists) {
-      if (exists) {
-        console.log('Site already archived');
-      } else {
-        request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
-      }
-    });
   });
 };

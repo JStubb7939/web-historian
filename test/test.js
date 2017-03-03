@@ -89,6 +89,19 @@ describe('archive helpers', function() {
     });
   });
 
+  describe('#readListOfUrlsAsync', function () {
+    it('should read urls from sites.txt', function (done) {
+      var urlArray = ['example1.com', 'example2.com'];
+      fs.writeFileSync(archive.paths.list, urlArray.join('\n'));
+
+      archive.readListOfUrlsAsync()
+      .then(function(urls) {
+        expect(urls).to.deep.equal(urlArray);
+        done();
+      });
+    });
+  });
+
   describe('#isUrlInList', function () {
     it('should check if a url is in the list', function (done) {
       var urlArray = ['example1.com', 'example2.com'];
@@ -109,6 +122,28 @@ describe('archive helpers', function() {
     });
   });
 
+  describe('#isUrlInListAsync', function () {
+    it('should check if a url is in the list', function (done) {
+      var urlArray = ['example1.com', 'example2.com'];
+      fs.writeFileSync(archive.paths.list, urlArray.join('\n'));
+
+      var counter = 0;
+      var total = 2;
+
+      archive.isUrlInListAsync('example1.com')
+      .then(function(exists) {
+        expect(exists).to.be.true;
+        if (++counter === total) { done(); }
+      });
+
+      archive.isUrlInListAsync('gibberish')
+      .then(function(exists) {
+        expect(exists).to.be.false;
+        if (++counter === total) { done(); }
+      });
+    });
+  });
+
   describe('#addUrlToList', function () {
     it('should add a url to the list', function (done) {
       var urlArray = ['example1.com', 'example2.com\n'];
@@ -123,6 +158,21 @@ describe('archive helpers', function() {
     });
   });
 
+  describe('#addUrlToListAsync', function () {
+    it('should add a url to the list', function (done) {
+      var urlArray = ['example1.com', 'example2.com\n'];
+      fs.writeFileSync(archive.paths.list, urlArray.join('\n'));
+
+      archive.addUrlToListAsync('someurl.com')
+      .then(archive.isUrlInListAsync('someurl.com'))
+      .then(function(exists) {
+        expect(exists).to.be.true;
+        done();
+      });
+    });
+  });
+
+
   describe('#isUrlArchived', function () {
     it('should check if a url is archived', function (done) {
       fs.writeFileSync(archive.paths.archivedSites + '/www.example.com', 'blah blah');
@@ -136,6 +186,27 @@ describe('archive helpers', function() {
       });
 
       archive.isUrlArchived('www.notarchived.com', function (exists) {
+        expect(exists).to.be.false;
+        if (++counter === total) { done(); }
+      });
+    });
+  });
+
+  describe('#isUrlArchivedAsync', function () {
+    it('should check if a url is archived', function (done) {
+      fs.writeFileSync(archive.paths.archivedSites + '/www.example.com', 'blah blah');
+
+      var counter = 0;
+      var total = 2;
+
+      archive.isUrlArchivedAsync('www.example.com')
+      .then(function(exists) {
+        expect(exists).to.be.true;
+        if (++counter === total) { done(); }
+      });
+
+      archive.isUrlArchivedAsync('www.notarchived.com')
+      .then(function(exists) {
         expect(exists).to.be.false;
         if (++counter === total) { done(); }
       });

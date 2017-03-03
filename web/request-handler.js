@@ -33,6 +33,32 @@ var actions = {
     });
   },
 
+  'POST': function(request, response) {
+    httpHelpers.collectData(request, function(data) {
+      // data.objectId = ++objectId;
+      archive.addUrlToListAsync(data)
+      .then(function(result) {
+        httpHelpers.sendRedirect(response, '/loading.html');
+      });
+    });
+  },
+
+  'OPTIONS': function(request, response) {
+    httpHelpers.sendResponse(response, null);
+  }
+
+};
+
+
+exports.handleRequest = function (request, response) {
+  var action = actions[request.method];
+  if (action) {
+    action(request, response);
+  } else {
+    httpHelpers.sendResponse(response, 'Not Found', 404);
+  }
+};
+
   // 'GET': function(request, response) {
   //   var parts = urlParser.parse(request.url);
   //   var urlPath = parts.pathname === '/' ? '/index.html' : parts.pathname;
@@ -47,18 +73,19 @@ var actions = {
   //   });
   // },
 
-  'POST': function(request, response) {
-    httpHelpers.collectData(request, function(data) {
-      // data.objectId = ++objectId;
-      archive.addUrlToList(data, function(error, result) {
-        if (error) {
-          console.error('Failed to post: ', error);
-        } else {
-          httpHelpers.sendRedirect(response, '/loading.html');
-        }
-      });
-    });
-  },
+  // 'POST': function(request, response) {
+  //   httpHelpers.collectData(request, function(data) {
+  //     // data.objectId = ++objectId;
+  //     archive.addUrlToList(data, function(error, result) {
+  //       if (error) {
+  //         console.error('Failed to post: ', error);
+  //       } else {
+  //         httpHelpers.sendRedirect(response, '/loading.html');
+  //       }
+  //     });
+  //   });
+  // },
+
 
   // 'POST': function(request, response) {
   //   httpHelpers.collectData(request, function(data) {
@@ -82,20 +109,5 @@ var actions = {
   //   });
   // },
 
-  'OPTIONS': function(request, response) {
-    httpHelpers.sendResponse(response, null);
-  }
-
-};
-
-
-exports.handleRequest = function (request, response) {
-  var action = actions[request.method];
-  if (action) {
-    action(request, response);
-  } else {
-    httpHelpers.sendResponse(response, 'Not Found', 404);
-  }
-};
 
 

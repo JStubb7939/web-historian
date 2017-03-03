@@ -20,23 +20,6 @@ exports.serveAssets = function(response, asset, callback) {
   });
 };
 
-// exports.serveAssets = function(response, asset, callback) {
-//   var encoding = {encoding: 'utf8'};
-//   fs.readFile(archive.paths.siteAssets + asset, encoding, function(error, data) {
-//     if (error) {
-//       fs.readFile(archive.paths.archivedSites + asset, encoding, function(error, data) {
-//         if (error) {
-//           callback ? callback() : exports.send404(response);
-//         } else {
-//           exports.sendResponse(response, data);
-//         }
-//       });
-//     } else {
-//       exports.sendResponse(response, data);
-//     }
-//   });
-// };
-
 exports.send404 = function(response) {
   exports.sendResponse(response, '404: Page not found', 404);
 };
@@ -76,6 +59,24 @@ exports.collectData = function(request, callback) {
     callback(body);
   });
 };
+
+// exports.serveAssets = function(response, asset, callback) {
+//   var encoding = {encoding: 'utf8'};
+//   fs.readFile(archive.paths.siteAssets + asset, encoding, function(error, data) {
+//     if (error) {
+//       fs.readFile(archive.paths.archivedSites + asset, encoding, function(error, data) {
+//         if (error) {
+//           callback ? callback() : exports.send404(response);
+//         } else {
+//           exports.sendResponse(response, data);
+//         }
+//       });
+//     } else {
+//       exports.sendResponse(response, data);
+//     }
+//   });
+// };
+
 
 // exports.collectData = function(request, callback) {
 //   var data = '';
