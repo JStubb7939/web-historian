@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var request = require('request');
 var _ = require('underscore');
 
 /*
@@ -26,16 +27,96 @@ exports.initialize = function(pathsObj) {
 // modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(callback) {
+  fs.readFile(exports.paths.list, 'utf8', function(error, data) {
+    if (error) {
+      callback(null, error);
+    } else {
+      var urlArray = data.split('\n');
+      callback(urlArray);
+    }
+  });
 };
+
+
+
+// exports.readListOfUrls = function(callback) {
+//   fs.readFile(exports.paths.list, 'utf8', function(error, sites) {
+//     sites = sites.toString().split('\n');
+//     if (callback) {
+//       callback(sites);
+//     }
+//   });
+// };
 
 exports.isUrlInList = function(url, callback) {
+  // regexp will probs solve this easy
+  exports.readListOfUrls(function(data, error) {
+    if (error) {
+      callback(error, null);
+    }
+    let result = false;
+    let pattern = new RegExp(url.replace('www.', ''));
+    _.each(data, function(element) {
+      if (element.match(pattern)) {
+        result = true;
+      }
+    });
+    callback(result);
+  });
 };
 
+// exports.isUrlInList = function(url, callback) {
+//   exports.readListOfUrls(function(sites) {
+//     var found = _.any(sites, function(site, i) {
+//       return site.match(url_);
+//     })
+//     callback(found);
+//   });
+// };
+
 exports.addUrlToList = function(url, callback) {
+  fs.appendFile(exports.paths.list, url + '\n', function(error, data) {
+    if (error) {
+      callback(error);
+    } else {
+      callback(null);
+    }
+  });
 };
 
 exports.isUrlArchived = function(url, callback) {
+  // probs regexp here too
+  fs.access(exports.paths.archivedSites + '/' + url, function(error) {
+    if (error) {
+      callback(false);
+    } else {
+      callback(true);
+    }
+  });
+};
+
+exports.isUrlArchived = function(url, callback) {
+  // probs regexp here too
+  fs.access(exports.paths.archivedSites + '/' + url, function(error) {
+    if (error) {
+      callback(false);
+    } else {
+      callback(true);
+    }
+  });
 };
 
 exports.downloadUrls = function(urls) {
+  _.each(urls, function(url) {
+    if (!url) {
+      return;
+    }
+    exports.isUrlArchived(url, function(exists) {
+      if (exists) {
+        console.log('Site already archived');
+      } else {
+        request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
+      }
+    });
+  });
 };
